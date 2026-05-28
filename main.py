@@ -27,9 +27,12 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS incidencias (
 conn.commit()
 
 def main(page: ft.Page):
+    # Configuración estética global de la ventana
     page.title = "Sistema de Incidencias"
     page.window_width = 450
-    page.window_height = 700
+    page.window_height = 730
+    page.theme_mode = ft.ThemeMode.DARK
+    page.bgcolor = "#14171A"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
@@ -39,7 +42,6 @@ def main(page: ft.Page):
                        (txt_usuario.value, txt_pass.value))
         usuario = cursor.fetchone()
         if usuario:
-            # Guardamos los datos en la variable global de forma segura
             usuario_logeado["rol"] = usuario[0]
             usuario_logeado["nombre"] = usuario[1]
             usuario_logeado["grupo"] = usuario[2]
@@ -62,20 +64,26 @@ def main(page: ft.Page):
             txt_reg_pass.value = ""
             txt_nombre.value = ""
             txt_grupo.value = ""
-            mostrar_alerta("Exito", "Registrado correctamente.")
+            mostrar_alerta("Éxito", "Registrado correctamente.")
             mostrar_login(None)
         except sqlite3.IntegrityError:
             mostrar_alerta("Error", "El usuario ya existe.")
 
     def guardar_incidencia(e):
         if not txt_incidencia.value:
-            mostrar_alerta("Aviso", "Escribe una descripcion.")
+            mostrar_alerta("Aviso", "Escribe una descripción.")
             return
         cursor.execute("INSERT INTO incidencias (alumno, grupo, descripcion) VALUES (?, ?, ?)",
                        (usuario_logeado["nombre"], usuario_logeado["grupo"], txt_incidencia.value))
         conn.commit()
         mostrar_alerta("Enviado", "Incidencia registrada.")
         txt_incidencia.value = ""
+        mostrar_pantalla_principal()
+
+    def eliminar_incidencia(id_incidencia):
+        cursor.execute("DELETE FROM incidencias WHERE id=?", (id_incidencia,))
+        conn.commit()
+        mostrar_alerta("Completado", "La incidencia ha sido eliminada.")
         mostrar_pantalla_principal()
 
     def cambiar_visibilidad_grupo(e):
@@ -87,7 +95,7 @@ def main(page: ft.Page):
             dlg.open = False
             page.update()
         dlg = ft.AlertDialog(
-            title=ft.Text(titulo),
+            title=ft.Text(titulo, weight=ft.FontWeight.BOLD),
             content=ft.Text(mensaje),
             actions=[ft.TextButton("Ok", on_click=cerrar_dialogo)]
         )
@@ -100,32 +108,69 @@ def main(page: ft.Page):
         txt_usuario.value = ""
         txt_pass.value = ""
         lbl_error.value = ""
-        page.add(
-            ft.Column([
-                ft.Text("Inicio de Sesion", size=26, weight=ft.FontWeight.BOLD),
+        
+        login_card = ft.Container(
+            content=ft.Column([
+                ft.Icon(ft.Icons.LOCK_PERSON_ROUNDED, size=50, color=ft.Colors.BLUE_400),
+                ft.Text("Inicio de Sesión", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                ft.Text("Ingresa tus credenciales", size=12, color=ft.Colors.GREY_500),
+                ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                 txt_usuario, 
                 txt_pass,
-                ft.ElevatedButton("Entrar", on_click=iniciar_sesion, width=250, bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE),
-                ft.TextButton("Registrarse aqui", on_click=mostrar_registro),
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                ft.ElevatedButton(
+                    "Entrar", 
+                    on_click=iniciar_sesion, 
+                    width=300, 
+                    height=45,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
+                    bgcolor=ft.Colors.BLUE_600, 
+                    color=ft.Colors.WHITE
+                ),
+                ft.TextButton("¿No tienes cuenta? Regístrate aquí", on_click=mostrar_registro, style=ft.ButtonStyle(color=ft.Colors.BLUE_400)),
                 lbl_error
-            ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+            ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            bgcolor="#1E2229",
+            padding=30,
+            border_radius=15,
+            shadow=ft.BoxShadow(blur_radius=10, color="#000000")
         )
+        
+        page.add(login_card)
         page.update()
 
     def mostrar_registro(e):
         page.clean()
-        page.add(
-            ft.Column([
-                ft.Text("Registro Escolar", size=26, weight=ft.FontWeight.BOLD),
+        
+        registro_card = ft.Container(
+            content=ft.Column([
+                ft.Icon(ft.Icons.SCHOOL_ROUNDED, size=50, color=ft.Colors.GREEN_400),
+                ft.Text("Registro Escolar", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                 rb_rol, 
                 txt_nombre, 
                 txt_grupo, 
                 txt_reg_usuario, 
                 txt_reg_pass,
-                ft.ElevatedButton("Registrarse", on_click=registrar_usuario, width=250, bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE),
-                ft.TextButton("Volver al Login", on_click=mostrar_login)
-            ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                ft.ElevatedButton(
+                    "Registrarse", 
+                    on_click=registrar_usuario, 
+                    width=300, 
+                    height=45,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
+                    bgcolor=ft.Colors.GREEN_600, 
+                    color=ft.Colors.WHITE
+                ),
+                ft.TextButton("Volver al Login", on_click=mostrar_login, style=ft.ButtonStyle(color=ft.Colors.GREY_400))
+            ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            bgcolor="#1E2229",
+            padding=25,
+            border_radius=15,
+            shadow=ft.BoxShadow(blur_radius=10, color="#000000")
         )
+        
+        page.add(registro_card)
         page.update()
 
     def mostrar_pantalla_principal():
@@ -140,71 +185,63 @@ def main(page: ft.Page):
                 page.update()
 
             area_reporte = ft.Column([
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                 txt_incidencia,
-                ft.ElevatedButton("Enviar Reporte", on_click=guardar_incidencia, bgcolor=ft.Colors.BLUE_GREY, color=ft.Colors.WHITE)
+                ft.ElevatedButton(
+                    "Enviar Reporte Oficial", 
+                    on_click=guardar_incidencia, 
+                    width=320,
+                    height=45,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
+                    bgcolor=ft.Colors.BLUE_GREY_700, 
+                    color=ft.Colors.WHITE
+                )
             ], visible=False, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
-            btn_rojo = ft.ElevatedButton(
-                "BOTON ROJO: SOLICITAR AYUDA", 
-                bgcolor=ft.Colors.RED,
-                color=ft.Colors.WHITE,
-                width=320,
-                height=70,
-                on_click=desplegar_caja
+            btn_rojo = ft.Container(
+                content=ft.ElevatedButton(
+                    "🚨 BOTÓN ROJO: SOLICITAR AYUDA", 
+                    bgcolor=ft.Colors.RED_600,
+                    color=ft.Colors.WHITE,
+                    width=320,
+                    height=75,
+                    on_click=desplegar_caja,
+                    style=ft.ButtonStyle(
+                        shape=ft.RoundedRectangleBorder(radius=12),
+                        text_style=ft.TextStyle(size=14, weight=ft.FontWeight.BOLD)
+                    )
+                ),
+                shadow=ft.BoxShadow(blur_radius=15, color=ft.Colors.RED_900)
             )
-            page.add(
-                ft.Column([
-                    ft.Text(f"Alumno: {nombre}", size=20, weight=ft.FontWeight.BOLD),
-                    ft.Text(f"Grupo: {grupo}", size=14),
+            
+            alumno_card = ft.Container(
+                content=ft.Column([
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=40, color=ft.Colors.BLUE_400),
+                        title=ft.Text(f"{nombre}", size=18, weight=ft.FontWeight.BOLD),
+                        subtitle=ft.Text(f"Grupo: {grupo}", size=13, color=ft.Colors.GREY_400)
+                    ),
+                    ft.Divider(color=ft.Colors.GREY_800),
+                    ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
                     btn_rojo,
                     area_reporte,
-                    ft.TextButton("Cerrar Sesion", on_click=mostrar_login)
-                ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                    ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
+                    ft.TextButton("Cerrar Sesión", on_click=mostrar_login, style=ft.ButtonStyle(color=ft.Colors.RED_300))
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                bgcolor="#1E2229",
+                padding=20,
+                border_radius=15,
+                width=380
             )
-        else:
-            cursor.execute("SELECT alumno, grupo, descripcion FROM incidencias ORDER BY id DESC")
-            reportes = cursor.fetchall()
-            lista_reportes = ft.ListView(expand=True, spacing=10, max_height=400)
+            page.add(alumno_card)
             
+        else:
+            cursor.execute("SELECT id, alumno, grupo, descripcion FROM incidencias ORDER BY id DESC")
+            reportes = cursor.fetchall()
+            lista_reportes = ft.ListView(expand=True, spacing=12, height=420)
+
             if not reportes:
-                lista_reportes.controls.append(ft.Text("No hay incidencias.", italic=True))
-            else:
-                for rep in reportes:
-                    lista_reportes.controls.append(
-                        ft.Card(
-                            content=ft.Container(
-                                content=ft.ListTile(
-                                    leading=ft.Icon(ft.Icons.WARNING, color=ft.Colors.RED),
-                                    title=ft.Text(f"{rep[0]} - Grupo: {rep[1]}"),
-                                    subtitle=ft.Text(f"Problema: {rep[2]}")
-                                ), padding=10
-                            )
-                        )
-                    )
-            page.add(
-                ft.Column([
-                    ft.Text(f"Prefecto/Profesor: {nombre}", size=20, weight=ft.FontWeight.BOLD),
-                    ft.Text("Lista de Incidencias:"),
-                    lista_reportes,
-                    ft.TextButton("Cerrar Sesion", on_click=mostrar_login)
-                ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-            )
-        page.update()
-
-    txt_usuario = ft.TextField(label="Usuario", width=300)
-    txt_pass = ft.TextField(label="Contrasena", password=True, can_reveal_password=True, width=300)
-    lbl_error = ft.Text(color=ft.Colors.RED)
-    rb_rol = ft.RadioGroup(content=ft.Row([
-        ft.Radio(value="Alumno", label="Alumno"),
-        ft.Radio(value="Profesor", label="Profesor")
-    ], alignment=ft.MainAxisAlignment.CENTER), value="Alumno", on_change=cambiar_visibilidad_grupo)
-    txt_nombre = ft.TextField(label="Nombre Completo", width=300)
-    txt_grupo = ft.TextField(label="Grupo", width=300)
-    txt_reg_usuario = ft.TextField(label="Nuevo Usuario", width=300)
-    txt_reg_pass = ft.TextField(label="Nueva Contrasena", password=True, width=300)
-    txt_incidencia = ft.TextField(label="¿Que te esta pasando?", multiline=True, min_lines=3, width=350)
-
-    mostrar_login(None)
-
-if __name__ == "__main__":
-    ft.app(target=main)
+                lista_reportes.controls.append(
+                    ft.Container(
+content=ft.Text("No hay incidencias activas en este momento.", 
+                italic=True, color=ft.Colors.GREY_500, text_align=ft.TextAlign.CENTER),padding=20,alignment=ft.alignment.center))else:for rep in reportes:id_actual = rep[0]lista_reportes.controls.append(ft.Card(color="#252A34",elevation=4,content=ft.Container(content=ft.ListTile(leading=ft.Icon(ft.Icons.REPORT_PROBLEM_ROUNDED, color=ft.Colors.AMBER_400, size=30),title=ft.Text(f"{rep[1]}", weight=ft.FontWeight.BOLD, size=15),subtitle=ft.Column([ft.Text(f"Grupo: {rep[2]}", size=12, color=ft.Colors.BLUE_200, weight=ft.FontWeight.W_500),ft.Text(f"{rep[3]}", size=13, color=ft.Colors.GREY_300)], spacing=3),trailing=ft.IconButton(icon=ft.Icons.CHECK_CIRCLE_ROUNDED,icon_color=ft.Colors.GREEN_400,icon_size=28,tooltip="Marcar como resuelto",on_click=lambda e, idx=id_actual: eliminar_incidencia(idx))), padding=12)))profe_card = ft.Container(content=ft.Column([ft.ListTile(leading=ft.Icon(ft.Icons.SUPERVISOR_ACCOUNT_ROUNDED, size=40, color=ft.Colors.GREEN_400),title=ft.Text(f"Prof: {nombre}", size=18, weight=ft.FontWeight.BOLD),subtitle=ft.Text("Panel de Control Escolar", size=12, color=ft.Colors.GREY_400)),ft.Divider(color=ft.Colors.GREY_800),ft.Text("Alertas Recientes:", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.GREY_300),lista_reportes,ft.Divider(height=10, color=ft.Colors.TRANSPARENT),ft.TextButton("Cerrar Sesión", on_click=mostrar_login, style=ft.ButtonStyle(color=ft.Colors.RED_300))]),bgcolor="#1E2229",padding=20,border_radius=15,width=400)page.add(profe_card)page.update()txt_usuario = ft.TextField(label="Usuario", width=300, prefix_icon=ft.Icons.PERSON, border_radius=8, bgcolor="#14171A")txt_pass = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, width=300, prefix_icon=ft.Icons.KEY, border_radius=8, bgcolor="#14171A")lbl_error = ft.Text(color=ft.Colors.RED_400, weight=ft.FontWeight.BOLD, size=13)rb_rol = ft.RadioGroup(content=ft.Row([ft.Radio(value="Alumno", label="Alumno"),ft.Radio(value="Profesor", label="Profesor")], alignment=ft.MainAxisAlignment.CENTER), value="Alumno", on_change=cambiar_visibilidad_grupo)txt_nombre = ft.TextField(label="Nombre Completo", width=300, prefix_icon=ft.Icons.BADGE, border_radius=8, bgcolor="#14171A")txt_grupo = ft.TextField(label="Grupo", width=300, prefix_icon=ft.Icons.GROUP, border_radius=8, bgcolor="#14171A")txt_reg_usuario = ft.TextField(label="Nuevo Usuario", width=300, prefix_icon=ft.Icons.PERSON_ADD, border_radius=8, bgcolor="#14171A")txt_reg_pass = ft.TextField(label="Nueva Contraseña", password=True, width=300, prefix_icon=ft.Icons.PASSWORD, border_radius=8, bgcolor="#14171A")txt_incidencia = ft.TextField(label="¿Qué emergencia o situación ocurre?",multiline=True,min_lines=3,width=320,border_radius=8,bgcolor="#14171A")mostrar_login(None)if name == "main":ft.app(target=main) 
