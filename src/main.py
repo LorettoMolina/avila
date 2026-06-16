@@ -2,7 +2,6 @@ import flet as ft
 
 from controllers.UserController import UserController
 from controllers.IncidenciaController import IncidenciaController
-
 from views.LoginView import LoginView
 from views.RegisterView import RegisterView
 from views.AlumnoView import AlumnoView
