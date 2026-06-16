@@ -1,61 +1,73 @@
 import flet as ft
 
-def ProfesorView(page, incidencias, resolver_func, logout):
 
-    cards = []
+def ProfesorView(
+    page,
+    incidencias,
+    resolver_func,
+    logout
+):
+
+    lista = []
 
     for item in incidencias:
 
-        cards.append(
-            ft.Container(
-                padding=15,
-                border_radius=10,
-                bgcolor="#111827",
+        lista.append(
 
-                content=ft.Column([
-                    ft.Text(
-                        item[1],
-                        weight="bold"
-                    ),
+            ft.Card(
 
-                    ft.Text(
-                        f"Grupo: {item[2]}"
-                    ),
+                content=ft.Container(
 
-                    ft.Text(
-                        item[3]
-                    ),
+                    padding=15,
 
-                    ft.ElevatedButton(
-                        "Resolver",
-                        on_click=lambda e,
-                        id=item[0]:
-                        resolver_func(id)
-                    )
-                ])
+                    content=ft.Column([
+
+                        ft.Text(
+                            item["alumno"]
+                        ),
+
+                        ft.Text(
+                            item["grupo"]
+                        ),
+
+                        ft.Text(
+                            item["descripcion"]
+                        ),
+
+                        ft.ElevatedButton(
+
+                            "Resolver",
+
+                            on_click=lambda e,
+                            id=item["id_incidencia"]:
+                            resolver_func(id)
+
+                        )
+                    ])
+                )
             )
         )
 
-    return ft.Container(
+    return ft.Column(
+
         expand=True,
-        content=ft.Column(
-            expand=True,
-            controls=[
-                ft.Text(
-                    "Panel Profesor",
-                    size=26
-                ),
 
-                ft.Column(
-                    cards,
-                    scroll=ft.ScrollMode.AUTO,
-                    expand=True
-                ),
+        controls=[
 
-                ft.TextButton(
-                    "Cerrar sesión",
-                    on_click=logout
-                )
-            ]
-        )
+            ft.Text(
+                "Panel Profesor",
+                size=30
+            ),
+
+            ft.Column(
+                lista,
+                expand=True,
+                scroll="auto"
+            ),
+
+            ft.TextButton(
+                "Cerrar sesión",
+                on_click=logout
+            )
+        ]
     )
